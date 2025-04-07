@@ -13,8 +13,10 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "axios": "^1.8.4",
     "body-parser": "^2.2.0",
     "class-validator": "^0.14.1",
+    "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^5.1.0",
     "mysql2": "^3.14.0",
@@ -23,6 +25,7 @@
     "typeorm": "^0.3.22"
   },
   "devDependencies": {
+    "@types/axios": "^0.14.4",
     "@types/express": "^5.0.1",
     "@types/node": "^22.14.0",
     "nodemon": "^3.1.9",
