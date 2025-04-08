@@ -1,8 +1,10 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
-import { AppDataSource } from "./config/data-source";
 import boardRoutes from "./routes/board.router";
+import { AppDataSource } from "./config/data-source";
+import swaggerSpec from "./config/swagger";
+import swaggerUi from "swagger-ui-express";
 
 dotenv.config();
 
@@ -15,6 +17,8 @@ app.use(
     credentials: true,
   })
 );
+
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.use(express.json());
 
