@@ -19,6 +19,8 @@ app.use(
 app.use(express.json());
 
 app.use("/api/boards", boardRoutes);
+app.use("/api/boards/diary", boardRoutes);
+app.use("/api/boards/til", boardRoutes);
 
 AppDataSource.initialize()
   .then(() => {
