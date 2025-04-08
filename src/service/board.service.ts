@@ -27,4 +27,40 @@ export class BoardService {
     });
     return tilList.map((til) => new BoardDto(til));
   }
+
+  async getRecentMainList(): Promise<BoardDto[]> {
+    const recentMainList = await this.boardRepo.find({
+      take: 4,
+      order: {
+        id: "DESC",
+      },
+    });
+    return recentMainList.map((board) => new BoardDto(board));
+  }
+
+  async getTilMainList(): Promise<BoardDto[]> {
+    const tilMainList = await this.boardRepo.find({
+      take: 4,
+      where: {
+        category: "til",
+      },
+      order: {
+        id: "DESC",
+      },
+    });
+    return tilMainList.map((til) => new BoardDto(til));
+  }
+
+  async getDiaryMainList(): Promise<BoardDto[]> {
+    const diaryMainList = await this.boardRepo.find({
+      take: 4,
+      where: {
+        category: "diary",
+      },
+      order: {
+        id: "DESC",
+      },
+    });
+    return diaryMainList.map((diary) => new BoardDto(diary));
+  }
 }
