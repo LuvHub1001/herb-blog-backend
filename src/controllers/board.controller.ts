@@ -30,15 +30,15 @@ export const getBoardsByCategory = async (req: Request, res: Response) => {
 
 export const getRecentMainList = async (req: Request, res: Response) => {
   const result = await boardService.getRecentMainList();
-  res.status(200).json(result); // ✅ 올바른 구조
+  res.status(200).json(result);
 };
 
 export const getTilMainList = async (req: Request, res: Response) => {
   const result = await boardService.getTilMainList();
-  res.status(200).json(result); // ✅ 올바른 구조
+  res.status(200).json(result);
 };
 
 export const getDiaryMainList = async (req: Request, res: Response) => {
   const result = await boardService.getDiaryMainList();
-  res.status(200).json(result); // ✅ 올바른 구조
+  res.status(200).json(result);
 };
