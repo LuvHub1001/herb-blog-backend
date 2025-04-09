@@ -4,31 +4,41 @@ import { BoardService } from "../service/board.service";
 const boardService = new BoardService();
 
 export const getAllBoardList = async (req: Request, res: Response) => {
-  const result = await boardService.getAllBoardList();
-  res.json(result);
+  const page = parseInt(req.params.page) || 1;
+  const limit = parseInt(req.params.limit) || 6;
+
+  const boardService = new BoardService();
+  const result = await boardService.getAllBoardList(page, limit);
+
+  res.status(200).json(result);
 };
 
-export const getTilList = async (req: Request, res: Response) => {
-  const reuslt = await boardService.getTilList();
-  res.json(reuslt);
-};
+export const getBoardsByCategory = async (req: Request, res: Response) => {
+  const category = req.params.category;
+  const page = parseInt(req.params.page) || 1;
+  const limit = parseInt(req.params.limit) || 6;
 
-export const getDiaryList = async (req: Request, res: Response) => {
-  const result = await boardService.getDiaryList();
-  res.json(result);
+  const boardService = new BoardService();
+  const result = await boardService.getBoardListByCategory(
+    category,
+    page,
+    limit
+  );
+
+  res.status(200).json(result);
 };
 
 export const getRecentMainList = async (req: Request, res: Response) => {
   const result = await boardService.getRecentMainList();
-  res.json(result);
+  res.status(200).json(result); // ✅ 올바른 구조
 };
 
 export const getTilMainList = async (req: Request, res: Response) => {
   const result = await boardService.getTilMainList();
-  res.json(result);
+  res.status(200).json(result); // ✅ 올바른 구조
 };
 
 export const getDiaryMainList = async (req: Request, res: Response) => {
   const result = await boardService.getDiaryMainList();
-  res.json(result);
+  res.status(200).json(result); // ✅ 올바른 구조
 };

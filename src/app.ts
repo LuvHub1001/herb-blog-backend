@@ -23,12 +23,6 @@ app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use(express.json());
 
 app.use("/api/boards", boardRoutes);
-app.use("/api/boards/til", boardRoutes);
-app.use("/api/boards/diary", boardRoutes);
-
-app.use("/api/boards/main-recent", boardRoutes);
-app.use("/api/boards/main-til", boardRoutes);
-app.use("/api/boards/main-diary", boardRoutes);
 
 AppDataSource.initialize()
   .then(() => {

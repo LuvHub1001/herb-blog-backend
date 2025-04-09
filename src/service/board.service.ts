@@ -5,27 +5,44 @@ import { BoardDto } from "../dto/board.dto";
 export class BoardService {
   private boardRepo = AppDataSource.getRepository(Board);
 
-  async getAllBoardList(): Promise<BoardDto[]> {
-    const boardList = await this.boardRepo.find();
-    return boardList.map((board) => new BoardDto(board));
+  async getAllBoardList(page: number, limit: number) {
+    const skip = (page - 1) * limit;
+
+    const [boards, totalCount] = await this.boardRepo.findAndCount({
+      skip,
+      take: limit,
+      order: { id: "DESC" },
+    });
+
+    const startIndex = skip + 1;
+    const endIndex = Math.min(skip + limit, totalCount);
+
+    return {
+      res: boards,
+      totalCount,
+      startIndex,
+      endIndex,
+    };
   }
 
-  async getDiaryList(): Promise<BoardDto[]> {
-    const diaryList = await this.boardRepo.find({
-      where: {
-        category: "diary",
-      },
+  async getBoardListByCategory(category: string, page: number, limit: number) {
+    const skip = (page - 1) * limit;
+    const [boards, totalCount] = await this.boardRepo.findAndCount({
+      where: { category },
+      skip,
+      take: limit,
+      order: { id: "DESC" },
     });
-    return diaryList.map((diary) => new BoardDto(diary));
-  }
 
-  async getTilList(): Promise<BoardDto[]> {
-    const tilList = await this.boardRepo.find({
-      where: {
-        category: "til",
-      },
-    });
-    return tilList.map((til) => new BoardDto(til));
+    const startIndex = skip + 1;
+    const endIndex = Math.min(skip + limit, totalCount);
+
+    return {
+      res: boards,
+      totalCount,
+      startIndex,
+      endIndex,
+    };
   }
 
   async getRecentMainList(): Promise<BoardDto[]> {
