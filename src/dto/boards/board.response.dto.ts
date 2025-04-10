@@ -1,6 +1,6 @@
-import { board } from "../types/board.type";
+import { board } from "../../types/board.type";
 
-export class BoardDto {
+export class BoardResponseDto {
   id: number;
   writer: string;
   title: string;
@@ -9,7 +9,7 @@ export class BoardDto {
   subContent: string;
   thumbnail: string;
   category: string;
-  workdate: string;
+  workdate: Date;
 
   constructor(data: board) {
     this.id = data.id;
