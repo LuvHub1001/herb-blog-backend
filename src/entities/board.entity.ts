@@ -1,4 +1,9 @@
-import { Entity, PrimaryGeneratedColumn, Column } from "typeorm";
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  Column,
+} from "typeorm";
 
 @Entity()
 export class Board {
@@ -17,15 +22,19 @@ export class Board {
   @Column()
   content: string;
 
-  @Column()
+  @Column({ default: "" })
   subContent: string;
 
-  @Column()
+  @Column({ default: "" })
   thumbnail: string;
 
   @Column()
   category: string;
 
-  @Column()
-  workdate: string;
+  @CreateDateColumn({
+    type: "timestamp",
+    precision: 6,
+    default: () => "CURRENT_TIMESTAMP(6)",
+  })
+  workdate: Date;
 }
