@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 import { BoardService } from "../service/board.service";
+import { CreateBoardDto } from "../dto/boards/board.create.dto";
 
 const boardService = new BoardService();
 
@@ -41,4 +42,18 @@ export const getTilMainList = async (req: Request, res: Response) => {
 export const getDiaryMainList = async (req: Request, res: Response) => {
   const result = await boardService.getDiaryMainList();
   res.status(200).json(result);
+};
+
+export const createBoard = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const dto: CreateBoardDto = req.body;
+    const newBoard = await boardService.createBoard(dto);
+    res.status(201).json(newBoard);
+  } catch (error) {
+    console.error("게시글 생성 오류:", error);
+    res.status(500).json({ message: "게시글 생성 실패" });
+  }
 };

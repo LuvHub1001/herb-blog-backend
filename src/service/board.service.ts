@@ -1,6 +1,7 @@
 import { Board } from "../entities/board.entity";
 import { AppDataSource } from "../config/data-source";
-import { BoardDto } from "../dto/board.dto";
+import { BoardResponseDto } from "../dto/boards/board.response.dto";
+import { CreateBoardDto } from "../dto/boards/board.create.dto";
 
 export class BoardService {
   private boardRepo = AppDataSource.getRepository(Board);
@@ -45,17 +46,17 @@ export class BoardService {
     };
   }
 
-  async getRecentMainList(): Promise<BoardDto[]> {
+  async getRecentMainList(): Promise<BoardResponseDto[]> {
     const recentMainList = await this.boardRepo.find({
       take: 4,
       order: {
         id: "DESC",
       },
     });
-    return recentMainList.map((board) => new BoardDto(board));
+    return recentMainList.map((board) => new BoardResponseDto(board));
   }
 
-  async getTilMainList(): Promise<BoardDto[]> {
+  async getTilMainList(): Promise<BoardResponseDto[]> {
     const tilMainList = await this.boardRepo.find({
       take: 4,
       where: {
@@ -65,10 +66,10 @@ export class BoardService {
         id: "DESC",
       },
     });
-    return tilMainList.map((til) => new BoardDto(til));
+    return tilMainList.map((til) => new BoardResponseDto(til));
   }
 
-  async getDiaryMainList(): Promise<BoardDto[]> {
+  async getDiaryMainList(): Promise<BoardResponseDto[]> {
     const diaryMainList = await this.boardRepo.find({
       take: 4,
       where: {
@@ -78,6 +79,11 @@ export class BoardService {
         id: "DESC",
       },
     });
-    return diaryMainList.map((diary) => new BoardDto(diary));
+    return diaryMainList.map((diary) => new BoardResponseDto(diary));
+  }
+
+  async createBoard(dto: CreateBoardDto): Promise<Board> {
+    const board = this.boardRepo.create(dto);
+    return await this.boardRepo.save(board);
   }
 }
