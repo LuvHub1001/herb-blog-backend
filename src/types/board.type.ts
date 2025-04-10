@@ -7,5 +7,5 @@ export type board = {
   subContent: string;
   thumbnail: string;
   category: string;
-  workdate: string;
+  workdate: Date;
 };
