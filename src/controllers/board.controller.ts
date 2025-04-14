@@ -6,7 +6,7 @@ const boardService = new BoardService();
 
 export const getAllBoardList = async (req: Request, res: Response) => {
   const page = parseInt(req.params.page) || 1;
-  const limit = parseInt(req.params.limit) || 6;
+  const limit = parseInt(req.params.limit) || 8;
 
   const boardService = new BoardService();
   const result = await boardService.getAllBoardList(page, limit);
@@ -17,7 +17,7 @@ export const getAllBoardList = async (req: Request, res: Response) => {
 export const getBoardsByCategory = async (req: Request, res: Response) => {
   const category = req.params.category;
   const page = parseInt(req.params.page) || 1;
-  const limit = parseInt(req.params.limit) || 6;
+  const limit = parseInt(req.params.limit) || 8;
 
   const boardService = new BoardService();
   const result = await boardService.getBoardListByCategory(
