@@ -57,3 +57,9 @@ export const createBoard = async (
     res.status(500).json({ message: "게시글 생성 실패" });
   }
 };
+
+export const getBoardDetail = async (req: Request, res: Response) => {
+  const id = parseInt(req.params.id);
+  const result = await boardService.getBoardDetail(id);
+  res.status(200).json(result);
+};

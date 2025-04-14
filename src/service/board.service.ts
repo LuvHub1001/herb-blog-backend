@@ -48,7 +48,7 @@ export class BoardService {
 
   async getRecentMainList(): Promise<BoardResponseDto[]> {
     const recentMainList = await this.boardRepo.find({
-      take: 4,
+      take: 3,
       order: {
         id: "DESC",
       },
@@ -85,5 +85,14 @@ export class BoardService {
   async createBoard(dto: CreateBoardDto): Promise<Board> {
     const board = this.boardRepo.create(dto);
     return await this.boardRepo.save(board);
+  }
+
+  async getBoardDetail(id: number): Promise<BoardResponseDto[]> {
+    const boardDetail = await this.boardRepo.find({
+      where: {
+        id: id,
+      },
+    });
+    return boardDetail.map((item) => new BoardResponseDto(item));
   }
 }
