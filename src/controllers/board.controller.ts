@@ -8,7 +8,6 @@ export const getAllBoardList = async (req: Request, res: Response) => {
   const page = parseInt(req.params.page) || 1;
   const limit = parseInt(req.params.limit) || 8;
 
-  const boardService = new BoardService();
   const result = await boardService.getAllBoardList(page, limit);
 
   res.status(200).json(result);
@@ -19,7 +18,6 @@ export const getBoardsByCategory = async (req: Request, res: Response) => {
   const page = parseInt(req.params.page) || 1;
   const limit = parseInt(req.params.limit) || 8;
 
-  const boardService = new BoardService();
   const result = await boardService.getBoardListByCategory(
     category,
     page,
