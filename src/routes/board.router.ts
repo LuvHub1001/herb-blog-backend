@@ -8,6 +8,7 @@ import {
   createBoard,
   getBoardDetail,
 } from "../controllers/board.controller";
+import { verifyToken } from "../middleware/auth.middleware";
 
 const router = Router();
 
@@ -18,6 +19,6 @@ router.get("/detail/:id", getBoardDetail);
 router.get("/:page/:limit", getAllBoardList);
 router.get("/:category/:page/:limit", getBoardsByCategory);
 
-router.post("/", createBoard);
+router.post("/", verifyToken, createBoard);
 
 export default router;
