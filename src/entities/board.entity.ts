@@ -31,6 +31,9 @@ export class Board {
   @Column()
   category: string;
 
+  @Column()
+  viewCount: number;
+
   @CreateDateColumn({
     type: "timestamp",
     precision: 6,
