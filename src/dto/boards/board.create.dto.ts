@@ -1,4 +1,4 @@
-import { IsDate, IsString, Length } from "class-validator";
+import { IsDate, IsNumber, IsString, Length } from "class-validator";
 
 export class CreateBoardDto {
   @IsString()
@@ -23,6 +23,9 @@ export class CreateBoardDto {
 
   @IsString()
   category: string;
+
+  @IsNumber()
+  viewCount: number;
 
   @IsDate()
   workdate: Date;

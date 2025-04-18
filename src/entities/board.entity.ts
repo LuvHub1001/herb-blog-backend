@@ -31,7 +31,7 @@ export class Board {
   @Column()
   category: string;
 
-  @Column()
+  @Column({ default: 0 })
   viewCount: number;
 
   @CreateDateColumn({
