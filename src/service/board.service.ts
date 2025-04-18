@@ -2,6 +2,7 @@ import { Board } from "../entities/board.entity";
 import { AppDataSource } from "../config/data-source";
 import { BoardResponseDto } from "../dto/boards/board.response.dto";
 import { CreateBoardDto } from "../dto/boards/board.create.dto";
+import { UpdateBoardDto } from "../dto/boards/board.update.dto";
 
 export class BoardService {
   private boardRepo = AppDataSource.getRepository(Board);
@@ -110,5 +111,18 @@ export class BoardService {
       .getRawMany();
 
     return result;
+  }
+
+  async deleteBoard(id: number): Promise<void> {
+    const board = await this.boardRepo.findOne({ where: { id } });
+    if (!board) throw new Error("게시글을 찾을 수 없습니다.");
+    await this.boardRepo.remove(board);
+  }
+
+  async updateBoard(dto: UpdateBoardDto, id: number): Promise<Board> {
+    const board = await this.boardRepo.findOne({ where: { id } });
+    if (!board) throw new Error("게시글을 찾을 수 없습니다.");
+    this.boardRepo.merge(board, dto);
+    return await this.boardRepo.save(board);
   }
 }

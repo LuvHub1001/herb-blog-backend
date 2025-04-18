@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { BoardService } from "../service/board.service";
 import { CreateBoardDto } from "../dto/boards/board.create.dto";
+import { UpdateBoardDto } from "../dto/boards/board.update.dto";
 
 const boardService = new BoardService();
 
@@ -65,4 +66,40 @@ export const getBoardDetail = async (req: Request, res: Response) => {
 export const getMonthlyViews = async (req: Request, res: Response) => {
   const result = await boardService.getMonthlyViewCounts();
   res.status(200).json(result);
+};
+
+export const deleteBoard = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  try {
+    const id = parseInt(req.params.id);
+
+    if (isNaN(id)) {
+      res.status(400).json({ message: "유효하지 않은 게시글 ID입니다." });
+      return;
+    }
+
+    await boardService.deleteBoard(id);
+    res.status(200).json({ message: "게시글이 삭제되었습니다." });
+  } catch (error) {
+    console.error("게시글 삭제 오류:", error);
+    res.status(500).json({ message: "게시글 삭제 실패" });
+  }
+};
+
+export const updateBoard = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const { id } = req.params;
+  const dto: UpdateBoardDto = req.body;
+
+  try {
+    const updatedBoard = await boardService.updateBoard(dto, parseInt(id));
+    res.status(200).json(updatedBoard);
+  } catch (error) {
+    console.error("게시글 수정 오류:", error);
+    res.status(500).json({ message: "게시글 수정에 실패했습니다." });
+  }
 };
