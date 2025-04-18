@@ -7,5 +7,6 @@ export type board = {
   subContent: string;
   thumbnail: string;
   category: string;
+  viewCount: number;
   workdate: Date;
 };

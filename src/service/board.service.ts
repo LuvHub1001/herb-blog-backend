@@ -87,12 +87,28 @@ export class BoardService {
     return await this.boardRepo.save(board);
   }
 
-  async getBoardDetail(id: number): Promise<BoardResponseDto[]> {
-    const boardDetail = await this.boardRepo.find({
-      where: {
-        id: id,
-      },
-    });
-    return boardDetail.map((item) => new BoardResponseDto(item));
+  async getBoardDetail(id: number): Promise<BoardResponseDto | null> {
+    const board = await this.boardRepo.findOne({ where: { id } });
+
+    if (!board) {
+      throw new Error("CANNOT FOUND POST!");
+    }
+
+    board.viewCount += 1;
+    await this.boardRepo.save(board);
+
+    return new BoardResponseDto(board);
+  }
+
+  async getMonthlyViewCounts(): Promise<{ month: string; count: number }[]> {
+    const result = await this.boardRepo
+      .createQueryBuilder("board")
+      .select("DATE_FORMAT(board.workdate, '%Y-%m')", "month")
+      .addSelect("SUM(board.viewCount)", "count")
+      .groupBy("month")
+      .orderBy("month", "ASC")
+      .getRawMany();
+
+    return result;
   }
 }

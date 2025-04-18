@@ -10,6 +10,7 @@ export class BoardResponseDto {
   thumbnail: string;
   category: string;
   workdate: Date;
+  viewCount: number;
 
   constructor(data: board) {
     this.id = data.id;
@@ -21,5 +22,6 @@ export class BoardResponseDto {
     this.thumbnail = data.thumbnail;
     this.category = data.category;
     this.workdate = data.workdate;
+    this.viewCount = data.viewCount;
   }
 }

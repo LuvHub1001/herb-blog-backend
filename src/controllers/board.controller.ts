@@ -61,3 +61,8 @@ export const getBoardDetail = async (req: Request, res: Response) => {
   const result = await boardService.getBoardDetail(id);
   res.status(200).json(result);
 };
+
+export const getMonthlyViews = async (req: Request, res: Response) => {
+  const result = await boardService.getMonthlyViewCounts();
+  res.status(200).json(result);
+};
