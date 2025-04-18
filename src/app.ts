@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import boardRoutes from "./routes/board.router";
 import authRoutes from "./routes/auth.router";
+import visitorRoutes from "./routes/visitor.router";
 import { AppDataSource } from "./config/data-source";
 import swaggerSpec from "./config/swagger";
 import swaggerUi from "swagger-ui-express";
@@ -25,6 +26,7 @@ app.use(express.json());
 
 app.use("/api/boards", boardRoutes);
 app.use("/api/auth", authRoutes);
+app.use("/api/visitor", visitorRoutes);
 
 AppDataSource.initialize()
   .then(() => {
