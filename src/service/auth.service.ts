@@ -1,5 +1,5 @@
 import { AppDataSource } from "../config/data-source";
-import { User } from "../entities/user.entity"; // 예시 엔티티
+import { User } from "../entities/user.entity";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
@@ -17,7 +17,12 @@ export const loginUser = async (id: string, password: string) => {
   }
 
   const token = jwt.sign(
-    { userId: user.id, username: user.username },
+    {
+      userId: user.id,
+      username: user.username,
+      role: user.role,
+      email: user.email,
+    },
     process.env.JWT_SECRET as string,
     { expiresIn: "1h" }
   );
