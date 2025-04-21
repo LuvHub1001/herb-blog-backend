@@ -10,6 +10,7 @@ import {
   getMonthlyViews,
   deleteBoard,
   updateBoard,
+  searchBoards,
 } from "../controllers/board.controller";
 import { verifyToken } from "../middleware/auth.middleware";
 
@@ -18,6 +19,7 @@ const router = Router();
 router.get("/main-recent", getRecentMainList);
 router.get("/main-til", getTilMainList);
 router.get("/main-diary", getDiaryMainList);
+router.get("/search", searchBoards);
 router.patch("/:id", verifyToken, updateBoard);
 router.get("/stats/views/monthly", getMonthlyViews);
 router.get("/detail/:id", getBoardDetail);

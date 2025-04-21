@@ -3,6 +3,7 @@ import { AppDataSource } from "../config/data-source";
 import { BoardResponseDto } from "../dto/boards/board.response.dto";
 import { CreateBoardDto } from "../dto/boards/board.create.dto";
 import { UpdateBoardDto } from "../dto/boards/board.update.dto";
+import { Like } from "typeorm";
 
 export class BoardService {
   private boardRepo = AppDataSource.getRepository(Board);
@@ -124,5 +125,17 @@ export class BoardService {
     if (!board) throw new Error("게시글을 찾을 수 없습니다.");
     this.boardRepo.merge(board, dto);
     return await this.boardRepo.save(board);
+  }
+
+  async searchBoards(keyword: string): Promise<Board[]> {
+    return await this.boardRepo.find({
+      where: [
+        { title: Like(`%${keyword}%`) },
+        { content: Like(`%${keyword}%`) },
+      ],
+      order: {
+        id: "DESC",
+      },
+    });
   }
 }

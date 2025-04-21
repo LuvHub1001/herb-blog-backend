@@ -103,3 +103,23 @@ export const updateBoard = async (
     res.status(500).json({ message: "게시글 수정에 실패했습니다." });
   }
 };
+
+export const searchBoards = async (
+  req: Request,
+  res: Response
+): Promise<void> => {
+  const keyword = req.query.keyword as string;
+
+  if (!keyword) {
+    res.status(400).json({ message: "검색어가 필요합니다." });
+    return;
+  }
+
+  try {
+    const result = await boardService.searchBoards(keyword);
+    res.status(200).json(result);
+  } catch (error) {
+    console.error("검색 오류:", error);
+    res.status(500).json({ message: "검색에 실패했습니다." });
+  }
+};
