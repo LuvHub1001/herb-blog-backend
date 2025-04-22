@@ -9,7 +9,7 @@ export class BoardResponseDto {
   subContent: string;
   thumbnail: string;
   category: string;
-  workdate: Date;
+  workdate: string;
   viewCount: number;
 
   constructor(data: board) {
@@ -21,7 +21,7 @@ export class BoardResponseDto {
     this.subContent = data.subContent;
     this.thumbnail = data.thumbnail;
     this.category = data.category;
-    this.workdate = data.workdate;
+    this.workdate = data.workdate.toISOString().split("T")[0];
     this.viewCount = data.viewCount;
   }
 }

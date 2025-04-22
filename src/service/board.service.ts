@@ -102,18 +102,6 @@ export class BoardService {
     return new BoardResponseDto(board);
   }
 
-  async getMonthlyViewCounts(): Promise<{ month: string; count: number }[]> {
-    const result = await this.boardRepo
-      .createQueryBuilder("board")
-      .select("DATE_FORMAT(board.workdate, '%Y-%m')", "month")
-      .addSelect("SUM(board.viewCount)", "count")
-      .groupBy("month")
-      .orderBy("month", "ASC")
-      .getRawMany();
-
-    return result;
-  }
-
   async deleteBoard(id: number): Promise<void> {
     const board = await this.boardRepo.findOne({ where: { id } });
     if (!board) throw new Error("게시글을 찾을 수 없습니다.");
@@ -137,5 +125,51 @@ export class BoardService {
         id: "DESC",
       },
     });
+  }
+
+  async getBoardStats() {
+    const today = new Date().toISOString().split("T")[0];
+    const yesterday = new Date(new Date().setDate(new Date().getDate() - 1))
+      .toISOString()
+      .split("T")[0];
+
+    const todayViewsResult = await this.boardRepo
+      .createQueryBuilder("board")
+      .select("SUM(board.viewCount)", "todayViews")
+      .where("DATE(board.workdate) = :today", { today })
+      .getRawOne();
+
+    const todayViews = todayViewsResult?.todayViews || 0;
+
+    const yesterdayViewsResult = await this.boardRepo
+      .createQueryBuilder("board")
+      .select("SUM(board.viewCount)", "yesterdayViews")
+      .where("DATE(board.workdate) = :yesterday", { yesterday })
+      .getRawOne();
+
+    const yesterdayViews = yesterdayViewsResult?.yesterdayViews || 0;
+
+    const totalViewsResult = await this.boardRepo
+      .createQueryBuilder("board")
+      .select("SUM(board.viewCount)", "totalViews")
+      .getRawOne();
+
+    const totalViews = totalViewsResult?.totalViews || 0;
+
+    const monthlyViews = await this.boardRepo
+      .createQueryBuilder("board")
+      .select(
+        "SUBSTRING(board.workdate, 1, 7) AS month, SUM(board.viewCount) AS totalViews"
+      )
+      .groupBy("month")
+      .orderBy("month", "DESC")
+      .getRawMany();
+
+    return {
+      today: todayViews,
+      yesterday: yesterdayViews,
+      total: totalViews,
+      monthly: monthlyViews,
+    };
   }
 }

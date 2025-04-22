@@ -7,7 +7,7 @@ import {
   getTilMainList,
   createBoard,
   getBoardDetail,
-  getMonthlyViews,
+  getBoardStats,
   deleteBoard,
   updateBoard,
   searchBoards,
@@ -20,8 +20,8 @@ router.get("/main-recent", getRecentMainList);
 router.get("/main-til", getTilMainList);
 router.get("/main-diary", getDiaryMainList);
 router.get("/search", searchBoards);
+router.get("/stats", getBoardStats);
 router.patch("/:id", verifyToken, updateBoard);
-router.get("/stats/views/monthly", getMonthlyViews);
 router.get("/detail/:id", getBoardDetail);
 router.get("/:page/:limit", getAllBoardList);
 router.get("/:category/:page/:limit", getBoardsByCategory);

@@ -6,8 +6,5 @@ export class Visitor {
   id: number;
 
   @Column()
-  ip: string;
-
-  @Column()
   date: string;
 }

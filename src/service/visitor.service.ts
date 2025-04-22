@@ -4,30 +4,11 @@ import { AppDataSource } from "../config/data-source";
 export class VisitorService {
   private visitorRepo = AppDataSource.getRepository(Visitor);
 
-  async getAllVisitors(page: number, limit: number) {
-    const skip = (page - 1) * limit;
-
-    const [visitors, totalCount] = await this.visitorRepo.findAndCount({
-      skip,
-      take: limit,
-      order: { id: "DESC" },
-    });
-
-    const startIndex = skip + 1;
-    const endIndex = Math.min(skip + limit, totalCount);
-
-    return {
-      res: visitors,
-      totalCount,
-      startIndex,
-      endIndex,
-    };
-  }
-
   async getVisitorStats(): Promise<{
     today: number;
     yesterday: number;
     total: number;
+    monthlyStats: { month: string; count: number }[];
   }> {
     const today = new Date().toISOString().split("T")[0];
     const yesterday = new Date(new Date().setDate(new Date().getDate() - 1))
@@ -40,24 +21,39 @@ export class VisitorService {
     });
     const totalCount = await this.visitorRepo.count();
 
+    const monthlyStats = await this.visitorRepo
+      .createQueryBuilder("visitor")
+      .select("SUBSTRING(visitor.date, 1, 7) AS month")
+      .addSelect("COUNT(visitor.id)", "count")
+      .groupBy("month")
+      .orderBy("month", "ASC")
+      .getRawMany();
+
     return {
       today: todayCount,
       yesterday: yesterdayCount,
       total: totalCount,
+      monthlyStats: monthlyStats.map((stat) => ({
+        month: stat.month,
+        count: parseInt(stat.count),
+      })),
     };
   }
 
   async createVisitor(ip: string): Promise<Visitor> {
     const date = new Date().toISOString().split("T")[0];
+
     const existingVisitor = await this.visitorRepo.findOne({
-      where: { ip, date },
+      where: { date },
     });
 
     if (existingVisitor) {
-      throw new Error("해당 IP는 오늘 이미 방문했습니다.");
+      return existingVisitor;
     }
 
-    const visitor = this.visitorRepo.create({ ip, date });
-    return await this.visitorRepo.save(visitor);
+    const visitor = this.visitorRepo.create({ date });
+    const savedVisitor = await this.visitorRepo.save(visitor);
+
+    return savedVisitor;
   }
 }

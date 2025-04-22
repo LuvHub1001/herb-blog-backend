@@ -63,11 +63,6 @@ export const getBoardDetail = async (req: Request, res: Response) => {
   res.status(200).json(result);
 };
 
-export const getMonthlyViews = async (req: Request, res: Response) => {
-  const result = await boardService.getMonthlyViewCounts();
-  res.status(200).json(result);
-};
-
 export const deleteBoard = async (
   req: Request,
   res: Response
@@ -121,5 +116,15 @@ export const searchBoards = async (
   } catch (error) {
     console.error("검색 오류:", error);
     res.status(500).json({ message: "검색에 실패했습니다." });
+  }
+};
+
+export const getBoardStats = async (req: Request, res: Response) => {
+  try {
+    const stats = await boardService.getBoardStats();
+    res.status(200).json(stats);
+  } catch (error) {
+    console.error("게시판 통계 오류:", error);
+    res.status(500).json({ message: "게시판 통계 조회 실패" });
   }
 };
