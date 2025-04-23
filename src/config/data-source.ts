@@ -15,6 +15,6 @@ export const AppDataSource = new DataSource({
   logging: true,
   entities:
     process.env.NODE_ENV === "production"
-      ? [path.join(__dirname, "../../dist/entities/**/*.entity.js")]
+      ? [path.join(__dirname, "entities/**/*.entity.js")]
       : [path.join(__dirname, "../entities/**/*.entity.ts")],
 });
