@@ -1,5 +1,5 @@
 import {
-  IsDate,
+  IsDateString,
   IsNumber,
   IsOptional,
   IsString,
@@ -42,6 +42,6 @@ export class UpdateBoardDto {
   viewCount?: number;
 
   @IsOptional()
-  @IsDate()
+  @IsDateString()
   workdate?: Date;
 }

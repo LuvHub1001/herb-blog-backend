@@ -1,8 +1,8 @@
-import { IsDate, IsNumber, IsString, Length } from "class-validator";
+import { IsDateString, IsNumber, IsOptional, IsString, Length } from "class-validator";
 
 export class CreateBoardDto {
+  @IsOptional()
   @IsString()
-  @Length(1, 100)
   writer: string;
 
   @IsString()
@@ -15,18 +15,22 @@ export class CreateBoardDto {
   @IsString()
   content: string;
 
+  @IsOptional()
   @IsString()
   subContent: string;
 
+  @IsOptional()
   @IsString()
   thumbnail: string;
 
   @IsString()
   category: string;
 
+  @IsOptional()
   @IsNumber()
   viewCount: number;
 
-  @IsDate()
+  @IsOptional()
+  @IsDateString()
   workdate: Date;
 }

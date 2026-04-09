@@ -1,130 +1,137 @@
-import { Request, Response } from "express";
+import { Response, NextFunction } from "express";
+import { AuthRequest } from "../middleware/auth.middleware";
 import { BoardService } from "../service/board.service";
-import { CreateBoardDto } from "../dto/boards/board.create.dto";
-import { UpdateBoardDto } from "../dto/boards/board.update.dto";
 
 const boardService = new BoardService();
 
-export const getAllBoardList = async (req: Request, res: Response) => {
-  const page = parseInt(req.params.page) || 1;
-  const limit = parseInt(req.params.limit) || 8;
+// 페이지네이션 파라미터 검증 (DoS 방지)
+const parsePage = (val: string) => Math.max(1, parseInt(val, 10) || 1);
+const parseLimit = (val: string) => Math.min(Math.max(1, parseInt(val, 10) || 8), 100);
 
-  const result = await boardService.getAllBoardList(page, limit);
-
-  res.status(200).json(result);
-};
-
-export const getBoardsByCategory = async (req: Request, res: Response) => {
-  const category = req.params.category;
-  const page = parseInt(req.params.page) || 1;
-  const limit = parseInt(req.params.limit) || 8;
-
-  const result = await boardService.getBoardListByCategory(
-    category,
-    page,
-    limit
-  );
-
-  res.status(200).json(result);
-};
-
-export const getRecentMainList = async (req: Request, res: Response) => {
-  const result = await boardService.getRecentMainList();
-  res.status(200).json(result);
-};
-
-export const getTilMainList = async (req: Request, res: Response) => {
-  const result = await boardService.getTilMainList();
-  res.status(200).json(result);
-};
-
-export const getDiaryMainList = async (req: Request, res: Response) => {
-  const result = await boardService.getDiaryMainList();
-  res.status(200).json(result);
-};
-
-export const createBoard = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+export const getAllBoardList = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const dto: CreateBoardDto = req.body;
-    const newBoard = await boardService.createBoard(dto);
-    res.status(201).json(newBoard);
+    const page = parsePage(req.params.page);
+    const limit = parseLimit(req.params.limit);
+    const result = await boardService.getAllBoardList(page, limit);
+    res.status(200).json({ success: true, data: result });
   } catch (error) {
-    console.error("게시글 생성 오류:", error);
-    res.status(500).json({ message: "게시글 생성 실패" });
+    next(error);
   }
 };
 
-export const getBoardDetail = async (req: Request, res: Response) => {
-  const id = parseInt(req.params.id);
-  const result = await boardService.getBoardDetail(id);
-  res.status(200).json(result);
+export const getBoardsByCategory = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const category = req.params.category;
+    const page = parsePage(req.params.page);
+    const limit = parseLimit(req.params.limit);
+    const result = await boardService.getBoardListByCategory(category, page, limit);
+    res.status(200).json({ success: true, data: result });
+  } catch (error) {
+    next(error);
+  }
 };
 
-export const deleteBoard = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
+export const getRecentMainList = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const id = parseInt(req.params.id);
+    const result = await boardService.getRecentMainList();
+    res.status(200).json({ success: true, data: result });
+  } catch (error) {
+    next(error);
+  }
+};
 
+export const getTilMainList = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const result = await boardService.getTilMainList();
+    res.status(200).json({ success: true, data: result });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getDiaryMainList = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const result = await boardService.getDiaryMainList();
+    res.status(200).json({ success: true, data: result });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const createBoard = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    // writer를 인증된 사용자로 강제 설정 (위조 방지)
+    const dto = { ...req.body, writer: req.user };
+    const newBoard = await boardService.createBoard(dto);
+    res.status(201).json({ success: true, data: newBoard });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getBoardDetail = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const id = parseInt(req.params.id, 10);
     if (isNaN(id)) {
-      res.status(400).json({ message: "유효하지 않은 게시글 ID입니다." });
+      res.status(400).json({ success: false, error: "유효하지 않은 게시글 ID입니다." });
       return;
     }
-
-    await boardService.deleteBoard(id);
-    res.status(200).json({ message: "게시글이 삭제되었습니다." });
+    const result = await boardService.getBoardDetail(id);
+    res.status(200).json({ success: true, data: result });
   } catch (error) {
-    console.error("게시글 삭제 오류:", error);
-    res.status(500).json({ message: "게시글 삭제 실패" });
+    next(error);
   }
 };
 
-export const updateBoard = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
-  const { id } = req.params;
-  const dto: UpdateBoardDto = req.body;
-
+export const deleteBoard = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const updatedBoard = await boardService.updateBoard(dto, parseInt(id));
-    res.status(200).json(updatedBoard);
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) {
+      res.status(400).json({ success: false, error: "유효하지 않은 게시글 ID입니다." });
+      return;
+    }
+    await boardService.deleteBoard(id, req.user!);
+    res.status(200).json({ success: true, data: { message: "게시글이 삭제되었습니다." } });
   } catch (error) {
-    console.error("게시글 수정 오류:", error);
-    res.status(500).json({ message: "게시글 수정에 실패했습니다." });
+    next(error);
   }
 };
 
-export const searchBoards = async (
-  req: Request,
-  res: Response
-): Promise<void> => {
-  const keyword = req.query.keyword as string;
-
-  if (!keyword) {
-    res.status(400).json({ message: "검색어가 필요합니다." });
-    return;
-  }
-
+export const updateBoard = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
-    const result = await boardService.searchBoards(keyword);
-    res.status(200).json(result);
+    const id = parseInt(req.params.id, 10);
+    if (isNaN(id)) {
+      res.status(400).json({ success: false, error: "유효하지 않은 게시글 ID입니다." });
+      return;
+    }
+    const updatedBoard = await boardService.updateBoard(req.body, id, req.user!);
+    res.status(200).json({ success: true, data: updatedBoard });
   } catch (error) {
-    console.error("검색 오류:", error);
-    res.status(500).json({ message: "검색에 실패했습니다." });
+    next(error);
   }
 };
 
-export const getBoardStats = async (req: Request, res: Response) => {
+export const searchBoards = async (req: AuthRequest, res: Response, next: NextFunction) => {
+  try {
+    const keyword = (req.query.keyword as string || "").trim();
+    if (!keyword || keyword.length > 100) {
+      res.status(400).json({ success: false, error: "검색어가 필요합니다. (최대 100자)" });
+      return;
+    }
+    const page = parsePage(req.query.page as string || "1");
+    const limit = parseLimit(req.query.limit as string || "20");
+    const result = await boardService.searchBoards(keyword, page, limit);
+    res.status(200).json({ success: true, data: result });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getBoardStats = async (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const stats = await boardService.getBoardStats();
-    res.status(200).json(stats);
+    res.status(200).json({ success: true, data: stats });
   } catch (error) {
-    console.error("게시판 통계 오류:", error);
-    res.status(500).json({ message: "게시판 통계 조회 실패" });
+    next(error);
   }
 };

@@ -13,20 +13,20 @@ export const verifyToken = (
   const authHeader = req.headers.authorization;
 
   if (!authHeader) {
-    res.status(401).json({ message: "토큰이 없습니다." });
+    res.status(401).json({ success: false, error: "토큰이 없습니다." });
     return;
   }
 
   const token = authHeader.split(" ")[1];
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as {
-      username: string;
-    };
+    const decoded = jwt.verify(token, process.env.JWT_SECRET as string, {
+      algorithms: ["HS256"],
+    }) as { username: string };
 
     req.user = decoded.username;
     next();
   } catch (error) {
-    res.status(401).json({ message: "유효하지 않은 토큰입니다." });
+    res.status(401).json({ success: false, error: "유효하지 않은 토큰입니다." });
   }
 };
