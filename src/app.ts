@@ -1,38 +1,73 @@
 import express from "express";
 import cors from "cors";
+import helmet from "helmet";
+import compression from "compression";
 import dotenv from "dotenv";
 import boardRoutes from "./routes/board.router";
 import authRoutes from "./routes/auth.router";
 import visitorRoutes from "./routes/visitor.router";
-import { AppDataSource } from "./config/data-source";
+import { errorHandler } from "./middleware/errorHandler";
+import { apiLimiter, authLimiter } from "./middleware/rateLimiter";
+import { requestId } from "./middleware/requestId";
+import { responseTime } from "./middleware/responseTime";
 import swaggerSpec from "./config/swagger";
 import swaggerUi from "swagger-ui-express";
 
 dotenv.config();
 
 const app = express();
-const PORT = process.env.PORT || 5000;
 
+// Request ID 추적 + 응답시간 로깅
+app.use(requestId);
+app.use(responseTime);
+
+// 보안 헤더
+app.use(helmet());
+
+// 응답 압축
+app.use(compression());
+
+// CORS
+const allowedOrigins = (process.env.ALLOWED_ORIGINS || "").split(",").filter(Boolean);
 app.use(
   cors({
-    origin: true,
+    origin: allowedOrigins.length > 0 ? allowedOrigins : false,
     credentials: true,
   })
 );
 
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+// Body 파싱 + 크기 제한
+app.use(express.json({ limit: "1mb" }));
+app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 
-app.use(express.json());
+// Swagger (프로덕션에서는 비활성화)
+if (process.env.NODE_ENV !== "production") {
+  app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+}
 
+// Health check
+app.get("/api/health", (_req, res) => {
+  res.status(200).json({
+    success: true,
+    data: {
+      status: "ok",
+      uptime: process.uptime(),
+      timestamp: new Date().toISOString(),
+      memory: process.memoryUsage(),
+    },
+  });
+});
+
+// Rate limiting
+app.use("/api/auth", authLimiter);
+app.use("/api", apiLimiter);
+
+// 라우트
 app.use("/api/boards", boardRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/visitor", visitorRoutes);
 
-AppDataSource.initialize()
-  .then(() => {
-    console.log("DB 연결 확인");
-    app.listen(PORT, () => {
-      console.log(`서버 구동 중 >> http://localhost:${PORT}`);
-    });
-  })
-  .catch((error) => console.log(`DB 연결 오류 >> ${error}`));
+// 에러 핸들러
+app.use(errorHandler);
+
+export default app;

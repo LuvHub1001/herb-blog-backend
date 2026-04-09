@@ -1,11 +1,9 @@
-import { AppDataSource } from "../config/data-source";
-import { User } from "../entities/user.entity";
+import prisma from "../config/prisma";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 
 export const loginUser = async (id: string, password: string) => {
-  const userRepository = AppDataSource.getRepository(User);
-  const user = await userRepository.findOne({ where: { id } });
+  const user = await prisma.user.findUnique({ where: { userId: id } });
 
   if (!user) {
     throw new Error("존재하지 않는 사용자입니다.");
@@ -18,7 +16,7 @@ export const loginUser = async (id: string, password: string) => {
 
   const token = jwt.sign(
     {
-      userId: user.id,
+      userId: user.userId,
       username: user.username,
       role: user.role,
       email: user.email,

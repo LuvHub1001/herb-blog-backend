@@ -1,175 +1,170 @@
-import { Board } from "../entities/board.entity";
-import { AppDataSource } from "../config/data-source";
+import prisma from "../config/prisma";
 import { BoardResponseDto } from "../dto/boards/board.response.dto";
 import { CreateBoardDto } from "../dto/boards/board.create.dto";
 import { UpdateBoardDto } from "../dto/boards/board.update.dto";
-import { Like } from "typeorm";
+
+// 목록 API용 select — content 제외 (대용량 필드)
+const BOARD_LIST_SELECT = {
+  id: true,
+  writer: true,
+  title: true,
+  subTitle: true,
+  subContent: true,
+  thumbnail: true,
+  category: true,
+  viewCount: true,
+  workdate: true,
+} as const;
 
 export class BoardService {
-  private boardRepo = AppDataSource.getRepository(Board);
-
   async getAllBoardList(page: number, limit: number) {
     const skip = (page - 1) * limit;
 
-    const [boards, totalCount] = await this.boardRepo.findAndCount({
-      skip,
-      take: limit,
-      order: { id: "DESC" },
-    });
-
-    const startIndex = skip + 1;
-    const endIndex = Math.min(skip + limit, totalCount);
+    const [boards, totalCount] = await Promise.all([
+      prisma.board.findMany({
+        select: BOARD_LIST_SELECT,
+        skip,
+        take: limit,
+        orderBy: { id: "desc" },
+      }),
+      prisma.board.count(),
+    ]);
 
     return {
       res: boards,
       totalCount,
-      startIndex,
-      endIndex,
+      startIndex: skip + 1,
+      endIndex: Math.min(skip + limit, totalCount),
     };
   }
 
   async getBoardListByCategory(category: string, page: number, limit: number) {
     const skip = (page - 1) * limit;
-    const [boards, totalCount] = await this.boardRepo.findAndCount({
-      where: { category },
-      skip,
-      take: limit,
-      order: { id: "DESC" },
-    });
 
-    const startIndex = skip + 1;
-    const endIndex = Math.min(skip + limit, totalCount);
+    const [boards, totalCount] = await Promise.all([
+      prisma.board.findMany({
+        select: BOARD_LIST_SELECT,
+        where: { category },
+        skip,
+        take: limit,
+        orderBy: { id: "desc" },
+      }),
+      prisma.board.count({ where: { category } }),
+    ]);
 
     return {
       res: boards,
       totalCount,
-      startIndex,
-      endIndex,
+      startIndex: skip + 1,
+      endIndex: Math.min(skip + limit, totalCount),
     };
   }
 
-  async getRecentMainList(): Promise<BoardResponseDto[]> {
-    const recentMainList = await this.boardRepo.find({
+  async getRecentMainList() {
+    return await prisma.board.findMany({
+      select: BOARD_LIST_SELECT,
       take: 3,
-      order: {
-        id: "DESC",
-      },
+      orderBy: { id: "desc" },
     });
-    return recentMainList.map((board) => new BoardResponseDto(board));
   }
 
-  async getTilMainList(): Promise<BoardResponseDto[]> {
-    const tilMainList = await this.boardRepo.find({
+  async getTilMainList() {
+    return await prisma.board.findMany({
+      select: BOARD_LIST_SELECT,
+      where: { category: "til" },
       take: 4,
-      where: {
-        category: "til",
-      },
-      order: {
-        id: "DESC",
-      },
+      orderBy: { id: "desc" },
     });
-    return tilMainList.map((til) => new BoardResponseDto(til));
   }
 
-  async getDiaryMainList(): Promise<BoardResponseDto[]> {
-    const diaryMainList = await this.boardRepo.find({
+  async getDiaryMainList() {
+    return await prisma.board.findMany({
+      select: BOARD_LIST_SELECT,
+      where: { category: "diary" },
       take: 4,
-      where: {
-        category: "diary",
-      },
-      order: {
-        id: "DESC",
-      },
+      orderBy: { id: "desc" },
     });
-    return diaryMainList.map((diary) => new BoardResponseDto(diary));
   }
 
-  async createBoard(dto: CreateBoardDto): Promise<Board> {
-    const board = this.boardRepo.create(dto);
-    return await this.boardRepo.save(board);
+  async createBoard(dto: CreateBoardDto) {
+    return await prisma.board.create({ data: dto });
   }
 
-  async getBoardDetail(id: number): Promise<BoardResponseDto | null> {
-    const board = await this.boardRepo.findOne({ where: { id } });
-
-    if (!board) {
-      throw new Error("CANNOT FOUND POST!");
-    }
-
-    board.viewCount += 1;
-    await this.boardRepo.save(board);
+  async getBoardDetail(id: number): Promise<BoardResponseDto> {
+    const board = await prisma.board.update({
+      where: { id },
+      data: { viewCount: { increment: 1 } },
+    });
+    if (!board) throw new Error("게시글을 찾을 수 없습니다.");
 
     return new BoardResponseDto(board);
   }
 
-  async deleteBoard(id: number): Promise<void> {
-    const board = await this.boardRepo.findOne({ where: { id } });
+  async deleteBoard(id: number, username: string): Promise<void> {
+    const board = await prisma.board.findUnique({ where: { id } });
     if (!board) throw new Error("게시글을 찾을 수 없습니다.");
-    await this.boardRepo.remove(board);
+    if (board.writer !== username) throw new Error("권한이 없습니다.");
+    await prisma.board.delete({ where: { id } });
   }
 
-  async updateBoard(dto: UpdateBoardDto, id: number): Promise<Board> {
-    const board = await this.boardRepo.findOne({ where: { id } });
+  async updateBoard(dto: UpdateBoardDto, id: number, username: string) {
+    const board = await prisma.board.findUnique({ where: { id } });
     if (!board) throw new Error("게시글을 찾을 수 없습니다.");
-    this.boardRepo.merge(board, dto);
-    return await this.boardRepo.save(board);
+    if (board.writer !== username) throw new Error("권한이 없습니다.");
+    return await prisma.board.update({ where: { id }, data: dto });
   }
 
-  async searchBoards(keyword: string): Promise<Board[]> {
-    return await this.boardRepo.find({
-      where: [
-        { title: Like(`%${keyword}%`) },
-        { content: Like(`%${keyword}%`) },
-      ],
-      order: {
-        id: "DESC",
-      },
-    });
+  async searchBoards(keyword: string, page: number = 1, limit: number = 20) {
+    const skip = (page - 1) * limit;
+    const take = Math.min(limit, 50);
+
+    const [boards, totalCount] = await Promise.all([
+      prisma.board.findMany({
+        select: BOARD_LIST_SELECT,
+        where: {
+          OR: [
+            { title: { contains: keyword, mode: "insensitive" } },
+            { content: { contains: keyword, mode: "insensitive" } },
+          ],
+        },
+        skip,
+        take,
+        orderBy: { id: "desc" },
+      }),
+      prisma.board.count({
+        where: {
+          OR: [
+            { title: { contains: keyword, mode: "insensitive" } },
+            { content: { contains: keyword, mode: "insensitive" } },
+          ],
+        },
+      }),
+    ]);
+
+    return { res: boards, totalCount };
   }
 
   async getBoardStats() {
     const today = new Date().toISOString().split("T")[0];
-    const yesterday = new Date(new Date().setDate(new Date().getDate() - 1))
-      .toISOString()
-      .split("T")[0];
+    const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0];
 
-    const todayViewsResult = await this.boardRepo
-      .createQueryBuilder("board")
-      .select("SUM(board.viewCount)", "todayViews")
-      .where("DATE(board.workdate) = :today", { today })
-      .getRawOne();
-
-    const todayViews = todayViewsResult?.todayViews || 0;
-
-    const yesterdayViewsResult = await this.boardRepo
-      .createQueryBuilder("board")
-      .select("SUM(board.viewCount)", "yesterdayViews")
-      .where("DATE(board.workdate) = :yesterday", { yesterday })
-      .getRawOne();
-
-    const yesterdayViews = yesterdayViewsResult?.yesterdayViews || 0;
-
-    const totalViewsResult = await this.boardRepo
-      .createQueryBuilder("board")
-      .select("SUM(board.viewCount)", "totalViews")
-      .getRawOne();
-
-    const totalViews = totalViewsResult?.totalViews || 0;
-
-    const monthlyViews = await this.boardRepo
-      .createQueryBuilder("board")
-      .select(
-        "SUBSTRING(board.workdate, 1, 7) AS month, SUM(board.viewCount) AS totalViews"
-      )
-      .groupBy("month")
-      .orderBy("month", "DESC")
-      .getRawMany();
+    const [todayResult, yesterdayResult, totalResult, monthlyResult] = await Promise.all([
+      prisma.$queryRaw<[{ sum: bigint | null }]>`
+        SELECT COALESCE(SUM("viewCount"), 0) as sum FROM board WHERE DATE(workdate) = ${today}::date`,
+      prisma.$queryRaw<[{ sum: bigint | null }]>`
+        SELECT COALESCE(SUM("viewCount"), 0) as sum FROM board WHERE DATE(workdate) = ${yesterday}::date`,
+      prisma.$queryRaw<[{ sum: bigint | null }]>`
+        SELECT COALESCE(SUM("viewCount"), 0) as sum FROM board`,
+      prisma.$queryRaw<{ month: string; totalViews: bigint }[]>`
+        SELECT TO_CHAR(workdate, 'YYYY-MM') as month, COALESCE(SUM("viewCount"), 0) as "totalViews"
+        FROM board GROUP BY month ORDER BY month DESC`,
+    ]);
 
     return {
-      today: todayViews,
-      yesterday: yesterdayViews,
-      total: totalViews,
-      monthly: monthlyViews,
+      today: Number(todayResult[0].sum),
+      yesterday: Number(yesterdayResult[0].sum),
+      total: Number(totalResult[0].sum),
+      monthly: monthlyResult.map((r) => ({ month: r.month, totalViews: Number(r.totalViews) })),
     };
   }
 }

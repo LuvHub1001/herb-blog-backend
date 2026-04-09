@@ -1,4 +1,15 @@
-import { board } from "../../types/board.type";
+interface BoardData {
+  id: number;
+  writer: string;
+  title: string;
+  subTitle: string;
+  content: string;
+  subContent: string;
+  thumbnail: string;
+  category: string;
+  viewCount: number;
+  workdate: Date;
+}
 
 export class BoardResponseDto {
   id: number;
@@ -12,7 +23,7 @@ export class BoardResponseDto {
   workdate: string;
   viewCount: number;
 
-  constructor(data: board) {
+  constructor(data: BoardData) {
     this.id = data.id;
     this.writer = data.writer;
     this.title = data.title;

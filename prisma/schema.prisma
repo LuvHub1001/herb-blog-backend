@@ -1,0 +1,50 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// 관리자 계정
+model User {
+  idx      Int    @id @default(autoincrement())
+  userId   String @unique @map("id") @db.VarChar
+  username String @db.VarChar
+  nickname String @db.VarChar
+  email    String @db.VarChar
+  password String @db.VarChar
+  role     String @default("admin") @db.VarChar
+
+  @@map("user")
+}
+
+// 블로그 게시글
+model Board {
+  id         Int      @id @default(autoincrement())
+  writer     String   @db.VarChar
+  title      String   @db.VarChar
+  subTitle   String   @db.VarChar
+  content    String   @db.VarChar
+  subContent String   @default("") @db.VarChar
+  thumbnail  String   @default("") @db.VarChar
+  category   String   @db.VarChar
+  viewCount  Int      @default(0)
+  workdate   DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([category])
+  @@index([workdate])
+  @@map("board")
+}
+
+// 방문자 기록
+model Visitor {
+  id   Int     @id @default(autoincrement())
+  ip   String? @db.VarChar
+  date String  @db.VarChar
+
+  @@index([date])
+  @@map("visitor")
+}
