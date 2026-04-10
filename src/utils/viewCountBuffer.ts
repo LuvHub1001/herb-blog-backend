@@ -20,22 +20,43 @@ async function flushViewCounts(): Promise<void> {
   const snapshot = new Map(viewBuffer);
   viewBuffer.clear();
 
-  try {
-    await Promise.all(
-      [...snapshot.entries()].map(([id, count]) =>
-        prisma.board.update({
-          where: { id },
-          data: { viewCount: { increment: count } },
-        })
-      )
-    );
-    logger.debug(`조회수 버퍼 반영 완료: ${snapshot.size}건`);
-  } catch (err) {
-    // 실패 시 버퍼에 다시 추가
-    for (const [id, count] of snapshot) {
+  const entries = [...snapshot.entries()];
+  const results = await Promise.allSettled(
+    entries.map(([id, count]) =>
+      // updateMany: 대상이 없어도 예외 없이 count:0 반환 → 삭제된 게시글은 자연스럽게 드롭
+      prisma.board.updateMany({
+        where: { id },
+        data: { viewCount: { increment: count } },
+      })
+    )
+  );
+
+  let ok = 0;
+  let dropped = 0;
+  let failed = 0;
+  results.forEach((res, i) => {
+    const [id, count] = entries[i];
+    if (res.status === "fulfilled") {
+      if (res.value.count === 0) {
+        dropped++; // 존재하지 않는 게시글 — 재시도하지 않음
+      } else {
+        ok++;
+      }
+    } else {
+      // 일시적 DB 오류로 간주 — 해당 항목만 버퍼에 되돌림
+      failed++;
       viewBuffer.set(id, (viewBuffer.get(id) ?? 0) + count);
+      logger.error("조회수 버퍼 반영 실패", {
+        boardId: id,
+        error: (res.reason as Error)?.message,
+      });
     }
-    logger.error("조회수 버퍼 반영 실패", { error: (err as Error).message });
+  });
+
+  if (ok || dropped || failed) {
+    logger.debug(
+      `조회수 버퍼 반영: 성공 ${ok}건, 드롭 ${dropped}건, 실패 ${failed}건`
+    );
   }
 }
 
