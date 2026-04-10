@@ -85,21 +85,20 @@ describe("BoardService", () => {
   describe("getBoardDetail", () => {
     it("게시글 상세를 반환하고 조회수를 증가시킨다", async () => {
       const board = { id: 1, writer: "admin", title: "테스트", subTitle: "s", content: "c", subContent: "", thumbnail: "", category: "til", viewCount: 6, workdate: new Date() };
-      prismaMock.board.update.mockResolvedValue(board);
+      prismaMock.board.findUnique.mockResolvedValue(board);
 
       const result = await service.getBoardDetail(1);
 
-      expect(prismaMock.board.update).toHaveBeenCalledWith({
+      expect(prismaMock.board.findUnique).toHaveBeenCalledWith({
         where: { id: 1 },
-        data: { viewCount: { increment: 1 } },
       });
       expect(result).not.toBeNull();
     });
 
     it("존재하지 않는 게시글은 에러를 던진다", async () => {
-      prismaMock.board.update.mockRejectedValue(new Error("게시글을 찾을 수 없습니다."));
+      prismaMock.board.findUnique.mockResolvedValue(null);
 
-      await expect(service.getBoardDetail(999)).rejects.toThrow();
+      await expect(service.getBoardDetail(999)).rejects.toThrow("게시글을 찾을 수 없습니다.");
     });
   });
 

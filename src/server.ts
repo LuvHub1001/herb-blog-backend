@@ -7,6 +7,7 @@ import { validateEnv } from "./config/env";
 import logger from "./config/logger";
 import { sendErrorAlert } from "./utils/discord";
 import { startHealthCheckScheduler } from "./utils/scheduler";
+import { startViewCountFlusher, stopViewCountFlusher } from "./utils/viewCountBuffer";
 
 // 환경변수 검증
 validateEnv();
@@ -26,6 +27,9 @@ prisma
     // 아침 서버 점검 스케줄러 시작
     startHealthCheckScheduler();
 
+    // 조회수 버퍼 플러셔 시작 (60초 간격 배치 반영)
+    startViewCountFlusher();
+
     // Graceful shutdown
     const shutdown = (signal: string) => {
       logger.info(`${signal} 수신 — 서버 종료 시작`);
@@ -34,6 +38,8 @@ prisma
         logger.info("HTTP 서버 종료 완료");
 
         try {
+          // 조회수 버퍼 최종 반영 후 DB 해제
+          await stopViewCountFlusher();
           await prisma.$disconnect();
           logger.info("DB 연결 해제 완료");
         } catch (err) {

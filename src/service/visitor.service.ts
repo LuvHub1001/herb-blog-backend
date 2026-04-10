@@ -28,7 +28,8 @@ export class VisitorService {
   async createVisitor(ip: string) {
     const date = new Date().toISOString().split("T")[0];
 
-    const existing = await prisma.visitor.findFirst({ where: { date } });
+    // 같은 날 + 같은 IP 방문자만 중복 체크 (기존: date만 체크하여 하루 1명만 기록됨)
+    const existing = await prisma.visitor.findFirst({ where: { date, ip } });
     if (existing) return existing;
 
     return await prisma.visitor.create({ data: { ip, date } });

@@ -2,6 +2,7 @@ import prisma from "../config/prisma";
 import { BoardResponseDto } from "../dto/boards/board.response.dto";
 import { CreateBoardDto } from "../dto/boards/board.create.dto";
 import { UpdateBoardDto } from "../dto/boards/board.update.dto";
+import { incrementViewCount, getBufferedCount } from "../utils/viewCountBuffer";
 
 // 목록 API용 select — content 제외 (대용량 필드)
 const BOARD_LIST_SELECT = {
@@ -91,13 +92,15 @@ export class BoardService {
   }
 
   async getBoardDetail(id: number): Promise<BoardResponseDto> {
-    const board = await prisma.board.update({
-      where: { id },
-      data: { viewCount: { increment: 1 } },
-    });
+    const board = await prisma.board.findUnique({ where: { id } });
     if (!board) throw new Error("게시글을 찾을 수 없습니다.");
 
-    return new BoardResponseDto(board);
+    // 조회수는 인메모리 버퍼에 누적 → 주기적 배치 반영
+    incrementViewCount(id);
+
+    // 응답에는 버퍼 포함 조회수 반환
+    const buffered = getBufferedCount(id);
+    return new BoardResponseDto({ ...board, viewCount: board.viewCount + buffered });
   }
 
   async deleteBoard(id: number, username: string): Promise<void> {

@@ -17,7 +17,16 @@ export const authLimiter = rateLimit({
   max: isDev ? 10000 : 10,
   standardHeaders: true,
   legacyHeaders: false,
-  message: { success: false, error: "로그인 시도가 너무 많습니다. 잠시 후 다시 시도해주세요." },
+  message: { success: false, error: "요청이 너무 많습니다. 잠시 후 다시 시도해주세요." },
+});
+
+// 로그인 전용 제한: 프로덕션 5분당 5회 (brute force 방지)
+export const loginLimiter = rateLimit({
+  windowMs: 5 * 60 * 1000,
+  max: isDev ? 10000 : 5,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { success: false, error: "로그인 시도가 너무 많습니다. 5분 후 다시 시도해주세요." },
 });
 
 // 검색 API 제한: 프로덕션 1분당 20회 / 개발 무제한

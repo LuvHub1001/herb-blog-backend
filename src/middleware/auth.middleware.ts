@@ -27,6 +27,11 @@ export const verifyToken = (
     req.user = decoded.username;
     next();
   } catch (error) {
+    // 만료된 토큰은 403, 그 외 인증 실패는 401
+    if (error instanceof jwt.TokenExpiredError) {
+      res.status(403).json({ success: false, error: "토큰이 만료되었습니다." });
+      return;
+    }
     res.status(401).json({ success: false, error: "유효하지 않은 토큰입니다." });
   }
 };

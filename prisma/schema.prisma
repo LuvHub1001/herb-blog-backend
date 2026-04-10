@@ -36,6 +36,7 @@ model Board {
 
   @@index([category])
   @@index([workdate])
+  @@index([category, workdate(sort: Desc)])
   @@map("board")
 }
 
@@ -46,5 +47,6 @@ model Visitor {
   date String  @db.VarChar
 
   @@index([date])
+  @@index([date, ip])
   @@map("visitor")
 }

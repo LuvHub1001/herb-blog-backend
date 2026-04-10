@@ -28,23 +28,29 @@ async function main() {
     },
   });
 
-  // E2E 테스트 계정
-  const testPassword = await bcrypt.hash(testPw, 10);
-  await prisma.user.upsert({
-    where: { userId: "test" },
-    update: { password: testPassword },
-    create: {
-      userId: "test",
-      username: "tester",
-      nickname: "테스터",
-      email: "test@test.com",
-      password: testPassword,
-      role: "admin",
-    },
-  });
-
   console.log("✅ 관리자 계정 생성 완료");
-  console.log("✅ E2E 테스트 계정 생성 완료");
+
+  // E2E 테스트 계정 — 프로덕션 환경에서는 생성하지 않음
+  if (process.env.NODE_ENV !== "production") {
+    const testPassword = await bcrypt.hash(testPw, 10);
+    await prisma.user.upsert({
+      where: { userId: "test" },
+      update: { password: testPassword },
+      create: {
+        userId: "test",
+        username: "tester",
+        nickname: "테스터",
+        email: "test@test.com",
+        password: testPassword,
+        role: "admin",
+      },
+    });
+    console.log("✅ E2E 테스트 계정 생성 완료");
+  } else {
+    // 프로덕션에서 기존 테스트 계정 존재 시 삭제
+    await prisma.user.deleteMany({ where: { userId: "test" } });
+    console.log("🔒 프로덕션: 테스트 계정 제거 완료");
+  }
 }
 
 main()

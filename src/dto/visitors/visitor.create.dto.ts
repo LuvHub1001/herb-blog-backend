@@ -1,7 +1,7 @@
-import { IsIP, IsOptional, IsString } from "class-validator";
+import { IsIP, IsOptional } from "class-validator";
 
 export class CreateVisitorDto {
   @IsOptional()
-  @IsString()
+  @IsIP()
   ip: string;
 }

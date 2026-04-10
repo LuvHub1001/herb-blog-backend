@@ -6,8 +6,10 @@ import dotenv from "dotenv";
 import boardRoutes from "./routes/board.router";
 import authRoutes from "./routes/auth.router";
 import visitorRoutes from "./routes/visitor.router";
+import uploadRoutes from "./routes/upload.router";
 import { errorHandler } from "./middleware/errorHandler";
 import { apiLimiter, authLimiter } from "./middleware/rateLimiter";
+import prisma from "./config/prisma";
 import { requestId } from "./middleware/requestId";
 import { responseTime } from "./middleware/responseTime";
 import swaggerSpec from "./config/swagger";
@@ -22,7 +24,15 @@ app.use(requestId);
 app.use(responseTime);
 
 // 보안 헤더
-app.use(helmet());
+app.use(
+  helmet({
+    hsts: {
+      maxAge: 31536000,
+      includeSubDomains: true,
+    },
+    frameguard: { action: "deny" },
+  })
+);
 
 // 응답 압축
 app.use(compression());
@@ -45,12 +55,21 @@ if (process.env.NODE_ENV !== "production") {
   app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 }
 
-// Health check
-app.get("/api/health", (_req, res) => {
-  res.status(200).json({
-    success: true,
+// Health check (DB 연결 상태 포함)
+app.get("/api/health", async (_req, res) => {
+  let dbStatus = "connected";
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+  } catch {
+    dbStatus = "disconnected";
+  }
+
+  const status = dbStatus === "connected" ? 200 : 503;
+  res.status(status).json({
+    success: dbStatus === "connected",
     data: {
-      status: "ok",
+      status: dbStatus === "connected" ? "ok" : "error",
+      db: dbStatus,
       uptime: process.uptime(),
       timestamp: new Date().toISOString(),
       memory: process.memoryUsage(),
@@ -66,6 +85,7 @@ app.use("/api", apiLimiter);
 app.use("/api/boards", boardRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/visitor", visitorRoutes);
+app.use("/api/upload", uploadRoutes);
 
 // 에러 핸들러
 app.use(errorHandler);
