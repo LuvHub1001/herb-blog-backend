@@ -12,7 +12,8 @@ import { startViewCountFlusher, stopViewCountFlusher } from "./utils/viewCountBu
 // 환경변수 검증
 validateEnv();
 
-const PORT = process.env.PORT || 5000;
+const PORT = Number(process.env.PORT) || 5000;
+const HOST = "0.0.0.0";
 
 // DB 연결 확인 + 서버 시작
 prisma
@@ -20,8 +21,8 @@ prisma
   .then(() => {
     logger.info("DB 연결 확인");
 
-    const server = app.listen(PORT, () => {
-      logger.info(`서버 구동 중 >> http://localhost:${PORT}`);
+    const server = app.listen(PORT, HOST, () => {
+      logger.info(`서버 구동 중 >> http://${HOST}:${PORT}`);
     });
 
     // 아침 서버 점검 스케줄러 시작
