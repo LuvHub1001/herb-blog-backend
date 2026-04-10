@@ -21,12 +21,13 @@ export const authLimiter = rateLimit({
   message: { success: false, error: "요청이 너무 많습니다. 잠시 후 다시 시도해주세요." },
 });
 
-// 로그인 전용 제한: 프로덕션 15분당 5회 (brute force 방지)
+// 로그인 전용 제한: 프로덕션 10분당 20회 (실패 시도만 카운트, brute force 방지)
 export const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: isDev ? 10000 : 5,
+  windowMs: 10 * 60 * 1000,
+  max: isDev ? 10000 : 20,
   standardHeaders: true,
   legacyHeaders: false,
+  skipSuccessfulRequests: true,
   message: { success: false, error: "너무 많은 로그인 시도. 잠시 후 다시 시도해주세요." },
   // 차단 발생 시 로깅 — 공격 IP 추적용
   handler: (req, res, _next, options) => {
