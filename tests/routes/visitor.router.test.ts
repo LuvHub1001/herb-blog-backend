@@ -27,26 +27,22 @@ describe("Visitor Router", () => {
   });
 
   describe("POST /api/visitor", () => {
-    it("201 — 방문자 기록을 생성한다", async () => {
+    it("201 — 방문자 기록을 생성한다 (IP는 서버에서 추출)", async () => {
       prismaMock.visitor.findFirst.mockResolvedValue(null);
-      const visitor = { id: 1, ip: "127.0.0.1", date: "2026-04-09" };
+      const visitor = { id: 1, ip: "::ffff:127.0.0.1", date: "2026-04-09" };
       prismaMock.visitor.create.mockResolvedValue(visitor);
 
-      const res = await request(app)
-        .post("/api/visitor")
-        .send({ ip: "127.0.0.1" });
+      const res = await request(app).post("/api/visitor");
 
       expect(res.status).toBe(201);
       expect(res.body.success).toBe(true);
     });
 
-    it("201 — 이미 방문한 날짜면 기존 레코드 반환", async () => {
-      const existing = { id: 1, ip: "127.0.0.1", date: "2026-04-09" };
+    it("201 — 이미 방문한 IP+날짜면 기존 레코드 반환", async () => {
+      const existing = { id: 1, ip: "::ffff:127.0.0.1", date: "2026-04-09" };
       prismaMock.visitor.findFirst.mockResolvedValue(existing);
 
-      const res = await request(app)
-        .post("/api/visitor")
-        .send({ ip: "127.0.0.1" });
+      const res = await request(app).post("/api/visitor");
 
       expect(res.status).toBe(201);
     });

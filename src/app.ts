@@ -19,6 +19,10 @@ dotenv.config();
 
 const app = express();
 
+// Railway 등 프록시 환경에서 req.ip, X-Forwarded-For 신뢰
+// 1 = 앞단 프록시 1홉만 신뢰 (true보다 안전 — IP 스푸핑 방지)
+app.set("trust proxy", 1);
+
 // Request ID 추적 + 응답시간 로깅
 app.use(requestId);
 app.use(responseTime);
